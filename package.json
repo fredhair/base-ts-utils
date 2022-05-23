@@ -1,6 +1,6 @@
 {
   "name": "base-utils",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A collection of helpful TS utilities to reduce boilerplate, repetitive code and reduce complexity. Making your daily tasks simpler and your code cleaner, leaner and easier to use / read.",
   "author": "Danny Pendle <hairfred@gmail.com> (https://dannysdesigns.co.uk)",
   "main": "build/main/index.js",
@@ -8,7 +8,7 @@
   "module": "build/module/index.js",
   "repository": "https://github.com/fredhair/base-utils",
   "license": "UNLICENSED",
-  "keywords": [],
+  "keywords": ["typescript", "utilities", "fredhair"],
   "scripts": {
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",

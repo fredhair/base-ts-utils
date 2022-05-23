@@ -1,0 +1,10 @@
+diff
+.idea/*
+.nyc_output
+test
+src/**.js
+coverage
+*.log
+yarn.lock
+.eslintrc*
+.editorconfig

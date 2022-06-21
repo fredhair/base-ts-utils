@@ -1,15 +1,9 @@
-export interface IReadonlyUtilityArray<T> extends ReadonlyArray<T> {
-  last: T | undefined;
-
-  extractMap<K extends keyof T>(...keys: K[]): Pick<T, K>[];
-}
-
 // type RequiresObjectType = 'The typeof this must be a javascript object';
 // type IsObject<T> = T extends Record<string, unknown> ? T : RequiresObjectType;
 
 export interface IUtilityArray<T> extends Array<T> {
   /**
-   * Provides a getter & setter for the last element. \
+   * Provides a getter (& setter for mutable) for the last element. \
    * The last element can only be set with a non undefined value
    */
   last: T | undefined;
@@ -30,6 +24,17 @@ export interface IUtilityArray<T> extends Array<T> {
    * @returns The removed value
    */
   removeAt(index: number): T | undefined;
+
+  /**
+   * Finds a single matching array item and removes it
+   *
+   * @param needleObject The data to match against
+   * @returns The removed object or undefined if not found
+   */
+  removeWhere<U extends Record<string, unknown>>(
+    this: IUtilityArray<U>,
+    needleObject: Partial<U>
+  ): U | undefined;
 
   /**
    * Extracts new objects containing only the keys specified
@@ -79,9 +84,32 @@ export interface IUtilityArray<T> extends Array<T> {
     key: K,
     value: typeof this[number][typeof key]
   ): number;
+
+  /**
+   * Finds an array item based on any number of matching object keys.
+   *
+   * @param needleObject The data to match against
+   * @returns The found object or undefined if not found
+   */
+  findWhere<U extends Record<string, unknown>>(
+    this: IUtilityArray<U>,
+    needleObject: Partial<U>
+  ): U | undefined;
+
+  /**
+   * Finds an array item's inded based on any number of matching object keys.
+   *
+   * @param needleObject The data to match against
+   * @returns The found index or -1
+   */
+  findIndexWhere<U extends Record<string, unknown>>(
+    this: IUtilityArray<U>,
+    needleObject: Partial<U>
+  ): number;
+
 }
 
-export class UtilityArray<T> extends Array<T> implements IUtilityArray<T> {
+export class MutableArray<T> extends Array<T> implements IUtilityArray<T> {
   /**
    * Used to construct and fill an array with a convenient generator callback syntax
    *
@@ -91,13 +119,13 @@ export class UtilityArray<T> extends Array<T> implements IUtilityArray<T> {
   static populate<U>(
     count: number,
     element: U | ((index: number) => U)
-  ): UtilityArray<U> {
+  ): MutableArray<U> {
     if (element instanceof Function) {
-      return new UtilityArray<U>(
+      return new MutableArray<U>(
         ...[...Array(count)].map((_, index) => element(index))
       );
     }
-    return new UtilityArray<U>(count).fill(element);
+    return new MutableArray<U>(count).fill(element);
   }
 
   get last(): T | undefined {
@@ -113,8 +141,13 @@ export class UtilityArray<T> extends Array<T> implements IUtilityArray<T> {
   replaceAt(index: number, value: T): T | undefined {
     return this.splice(index, 1, value)?.[0];
   }
+
   removeAt(index: number): T | undefined {
     return this.splice(index, 1)?.[0];
+  }
+
+  removeWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): U | undefined {
+    return this.removeAt(this.findIndexWhere(needleObject));
   }
 
   extractMap<U extends Record<string, unknown>, K extends keyof U>(
@@ -143,6 +176,115 @@ export class UtilityArray<T> extends Array<T> implements IUtilityArray<T> {
     value: U[K]
   ): number {
     return this.findIndex(({ [key]: needle }) => needle === value);
+  }
+
+  findWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): U | undefined {
+    return this.find(iterator => {
+      for (const [needleKey, needleValue] of Object.entries(needleObject)) {
+        if (iterator[needleKey] === needleValue) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  findIndexWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): number {
+    return this.findIndex(iterator => {
+      for (const [needleKey, needleValue] of Object.entries(needleObject)) {
+        if (iterator[needleKey] === needleValue) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+}
+
+
+export class ImmutableArray<T> extends Array<T> implements IUtilityArray<T> {
+  /**
+   * Used to construct and fill an array with a convenient generator callback syntax
+   *
+   * @param count The number of elements to create
+   * @param element A static object to be copied or a generator function that takes in the index and returns an object
+   */
+  static populate<U>(
+    count: number,
+    element: U | ((index: number) => U)
+  ): ImmutableArray<U> {
+    if (element instanceof Function) {
+      return new ImmutableArray<U>(
+        ...[...Array(count)].map((_, index) => element(index))
+      );
+    }
+    return new ImmutableArray<U>(count).fill(element);
+  }
+
+  get last(): T | undefined {
+    return this.length ? this[this.length - 1] : undefined;
+  }
+
+  replaceAt(index: number, value: T): T | undefined {
+    return this.splice(index, 1, value)?.[0];
+  }
+
+  removeAt(index: number): T | undefined {
+    return this.splice(index, 1)?.[0];
+  }
+
+  removeWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): U | undefined {
+    return this.removeAt(this.findIndexWhere(needleObject));
+  }
+
+  extractMap<U extends Record<string, unknown>, K extends keyof U>(
+    this: IUtilityArray<U>,
+    ...keys: K[]
+  ): Pick<U, K>[] {
+    return this.map((value) =>
+      keys.reduce(
+        (prev, current) => ({ ...prev, [current]: value[current] }),
+        {} as Pick<U, K>
+      )
+    );
+  }
+
+  findBy<U extends Record<string, unknown>, K extends keyof U>(
+    this: IUtilityArray<U>,
+    key: K,
+    value: typeof this[number][typeof key]
+  ): U | undefined {
+    return this.find(({ [key]: needle }) => needle === value);
+  }
+
+  findIndexBy<U extends Record<string, unknown>, K extends keyof U>(
+    this: IUtilityArray<U>,
+    key: K,
+    value: U[K]
+  ): number {
+    return this.findIndex(({ [key]: needle }) => needle === value);
+  }
+
+  findWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): U | undefined {
+    return this.find(iterator => {
+      for (const [needleKey, needleValue] of Object.entries(needleObject)) {
+        if (iterator[needleKey] === needleValue) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  findIndexWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): number {
+    return this.findIndex(iterator => {
+      for (const [needleKey, needleValue] of Object.entries(needleObject)) {
+        if (iterator[needleKey] === needleValue) {
+          return false;
+        }
+      }
+      return true;
+    });
   }
 }
 

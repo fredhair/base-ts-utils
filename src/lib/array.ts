@@ -15,7 +15,7 @@ export interface IUtilityArray<T> extends Array<T> {
    * @param value The new value to be inserted
    * @returns The replaced value
    */
-  replaceAt(index: number, value: T): T | undefined;
+  replaceAt(index: number, value: T): unknown;
 
   /**
    * Removes a single element in a mutable array
@@ -23,7 +23,7 @@ export interface IUtilityArray<T> extends Array<T> {
    * @param index The index to be removed
    * @returns The removed value
    */
-  removeAt(index: number): T | undefined;
+  removeAt(index: number): unknown;
 
   /**
    * Finds a single matching array item and removes it
@@ -34,7 +34,7 @@ export interface IUtilityArray<T> extends Array<T> {
   removeWhere<U extends Record<string, unknown>>(
     this: IUtilityArray<U>,
     needleObject: Partial<U>
-  ): U | undefined;
+  ): unknown;
 
   /**
    * Extracts new objects containing only the keys specified
@@ -109,7 +109,68 @@ export interface IUtilityArray<T> extends Array<T> {
 
 }
 
-export class MutableArray<T> extends Array<T> implements IUtilityArray<T> {
+
+interface IMutableUtilityArray<T> extends IUtilityArray<T> {
+  /**
+   * Replaces a single element in a mutable array
+   *
+   * @param index The index to be replaced
+   * @param value The new value to be inserted
+   * @returns The replaced value
+   */
+  replaceAt(index: number, value: T): T | undefined;
+
+  /**
+   * Removes a single element in a mutable array
+   *
+   * @param index The index to be removed
+   * @returns The removed value
+   */
+  removeAt(index: number): T | undefined;
+
+  /**
+   * Finds a single matching array item and removes it
+   *
+   * @param needleObject The data to match against
+   * @returns The removed object or undefined if not found
+   */
+  removeWhere<U extends Record<string, unknown>>(
+    this: IUtilityArray<U>,
+    needleObject: Partial<U>
+  ): U | undefined;
+}
+
+interface IImmutableUtilityArray<T> extends IUtilityArray<T> {
+  /**
+   * Replaces a single element in a mutable array
+   *
+   * @param index The index to be replaced
+   * @param value The new value to be inserted
+   * @returns The replaced value
+   */
+  replaceAt(index: number, value: T): IImmutableUtilityArray<T>;
+
+  /**
+   * Removes a single element in a mutable array
+   *
+   * @param index The index to be removed
+   * @returns The removed value
+   */
+  removeAt(index: number): IImmutableUtilityArray<T>;
+
+  /**
+   * Finds a single matching array item and removes it
+   *
+   * @param needleObject The data to match against
+   * @returns The removed object or undefined if not found
+   */
+  removeWhere<U extends Record<string, unknown>>(
+    this: IImmutableUtilityArray<U>,
+    needleObject: Partial<U>
+  ): IImmutableUtilityArray<U>;
+}
+
+export class MutableArray<T> extends Array<T> implements IMutableUtilityArray<T> {
   /**
    * Used to construct and fill an array with a convenient generator callback syntax
    *
@@ -147,7 +208,7 @@ export class MutableArray<T> extends Array<T> implements IUtilityArray<T> {
   }
 
   removeWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): U | undefined {
-    return this.removeAt(this.findIndexWhere(needleObject));
+    return this.removeAt(this.findIndexWhere(needleObject)) as U | undefined;
   }
 
   extractMap<U extends Record<string, unknown>, K extends keyof U>(
@@ -202,7 +263,7 @@ export class MutableArray<T> extends Array<T> implements IUtilityArray<T> {
 }
 
 
-export class ImmutableArray<T> extends Array<T> implements IUtilityArray<T> {
+export class ImmutableArray<T> extends Array<T> implements IImmutableUtilityArray<T> {
   /**
    * Used to construct and fill an array with a convenient generator callback syntax
    *
@@ -225,15 +286,28 @@ export class ImmutableArray<T> extends Array<T> implements IUtilityArray<T> {
     return this.length ? this[this.length - 1] : undefined;
   }
 
-  replaceAt(index: number, value: T): T | undefined {
-    return this.splice(index, 1, value)?.[0];
+  replaceAt(index: number, value: T): IImmutableUtilityArray<T> {
+    // return this.splice(index, 1, value)?.[0];
+    if (index >= this.length - 1) {
+      return new ImmutableArray<T>(...this.slice(0, -1), value);
+    }
+    else if (index === 0) {
+      return new ImmutableArray<T>(value, ...this.slice(1));
+    }
+    return new ImmutableArray<T>(...this.slice(0, index), value, ...this.slice(index + 1));
   }
 
-  removeAt(index: number): T | undefined {
-    return this.splice(index, 1)?.[0];
+  removeAt(index: number): IImmutableUtilityArray<T> {
+    if (index >= this.length - 1) {
+      return new ImmutableArray<T>(...this.slice(0, -1));
+    }
+    else if (index === 0) {
+      return new ImmutableArray<T>(...this.slice(1));
+    }
+    return new ImmutableArray<T>(...this.slice(0, index), ...this.slice(index + 1));
   }
 
-  removeWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): U | undefined {
+  removeWhere<U extends Record<string, unknown>>(this: IImmutableUtilityArray<U>, needleObject: Partial<U>): IImmutableUtilityArray<U> {
     return this.removeAt(this.findIndexWhere(needleObject));
   }
 

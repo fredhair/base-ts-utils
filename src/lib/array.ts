@@ -106,9 +106,7 @@ export interface IUtilityArray<T> extends Array<T> {
     this: IUtilityArray<U>,
     needleObject: Partial<U>
   ): number;
-
 }
-
 
 interface IMutableUtilityArray<T> extends IUtilityArray<T> {
   /**
@@ -170,7 +168,10 @@ interface IImmutableUtilityArray<T> extends IUtilityArray<T> {
   ): IImmutableUtilityArray<U>;
 }
 
-export class MutableArray<T> extends Array<T> implements IMutableUtilityArray<T> {
+export class MutableArray<T>
+  extends Array<T>
+  implements IMutableUtilityArray<T>
+{
   /**
    * Used to construct and fill an array with a convenient generator callback syntax
    *
@@ -207,7 +208,10 @@ export class MutableArray<T> extends Array<T> implements IMutableUtilityArray<T>
     return this.splice(index, 1)?.[0];
   }
 
-  removeWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): U | undefined {
+  removeWhere<U extends Record<string, unknown>>(
+    this: IUtilityArray<U>,
+    needleObject: Partial<U>
+  ): U | undefined {
     return this.removeAt(this.findIndexWhere(needleObject)) as U | undefined;
   }
 
@@ -239,8 +243,11 @@ export class MutableArray<T> extends Array<T> implements IMutableUtilityArray<T>
     return this.findIndex(({ [key]: needle }) => needle === value);
   }
 
-  findWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): U | undefined {
-    return this.find(iterator => {
+  findWhere<U extends Record<string, unknown>>(
+    this: IUtilityArray<U>,
+    needleObject: Partial<U>
+  ): U | undefined {
+    return this.find((iterator) => {
       for (const [needleKey, needleValue] of Object.entries(needleObject)) {
         if (iterator[needleKey] === needleValue) {
           return false;
@@ -250,8 +257,11 @@ export class MutableArray<T> extends Array<T> implements IMutableUtilityArray<T>
     });
   }
 
-  findIndexWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): number {
-    return this.findIndex(iterator => {
+  findIndexWhere<U extends Record<string, unknown>>(
+    this: IUtilityArray<U>,
+    needleObject: Partial<U>
+  ): number {
+    return this.findIndex((iterator) => {
       for (const [needleKey, needleValue] of Object.entries(needleObject)) {
         if (iterator[needleKey] === needleValue) {
           return false;
@@ -262,8 +272,10 @@ export class MutableArray<T> extends Array<T> implements IMutableUtilityArray<T>
   }
 }
 
-
-export class ImmutableArray<T> extends Array<T> implements IImmutableUtilityArray<T> {
+export class ImmutableArray<T>
+  extends Array<T>
+  implements IImmutableUtilityArray<T>
+{
   /**
    * Used to construct and fill an array with a convenient generator callback syntax
    *
@@ -290,24 +302,32 @@ export class ImmutableArray<T> extends Array<T> implements IImmutableUtilityArra
     // return this.splice(index, 1, value)?.[0];
     if (index >= this.length - 1) {
       return new ImmutableArray<T>(...this.slice(0, -1), value);
-    }
-    else if (index === 0) {
+    } else if (index === 0) {
       return new ImmutableArray<T>(value, ...this.slice(1));
     }
-    return new ImmutableArray<T>(...this.slice(0, index), value, ...this.slice(index + 1));
+    return new ImmutableArray<T>(
+      ...this.slice(0, index),
+      value,
+      ...this.slice(index + 1)
+    );
   }
 
   removeAt(index: number): IImmutableUtilityArray<T> {
     if (index >= this.length - 1) {
       return new ImmutableArray<T>(...this.slice(0, -1));
-    }
-    else if (index === 0) {
+    } else if (index === 0) {
       return new ImmutableArray<T>(...this.slice(1));
     }
-    return new ImmutableArray<T>(...this.slice(0, index), ...this.slice(index + 1));
+    return new ImmutableArray<T>(
+      ...this.slice(0, index),
+      ...this.slice(index + 1)
+    );
   }
 
-  removeWhere<U extends Record<string, unknown>>(this: IImmutableUtilityArray<U>, needleObject: Partial<U>): IImmutableUtilityArray<U> {
+  removeWhere<U extends Record<string, unknown>>(
+    this: IImmutableUtilityArray<U>,
+    needleObject: Partial<U>
+  ): IImmutableUtilityArray<U> {
     return this.removeAt(this.findIndexWhere(needleObject));
   }
 
@@ -339,8 +359,11 @@ export class ImmutableArray<T> extends Array<T> implements IImmutableUtilityArra
     return this.findIndex(({ [key]: needle }) => needle === value);
   }
 
-  findWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): U | undefined {
-    return this.find(iterator => {
+  findWhere<U extends Record<string, unknown>>(
+    this: IUtilityArray<U>,
+    needleObject: Partial<U>
+  ): U | undefined {
+    return this.find((iterator) => {
       for (const [needleKey, needleValue] of Object.entries(needleObject)) {
         if (iterator[needleKey] === needleValue) {
           return false;
@@ -350,8 +373,11 @@ export class ImmutableArray<T> extends Array<T> implements IImmutableUtilityArra
     });
   }
 
-  findIndexWhere<U extends Record<string, unknown>>(this: IUtilityArray<U>, needleObject: Partial<U>): number {
-    return this.findIndex(iterator => {
+  findIndexWhere<U extends Record<string, unknown>>(
+    this: IUtilityArray<U>,
+    needleObject: Partial<U>
+  ): number {
+    return this.findIndex((iterator) => {
       for (const [needleKey, needleValue] of Object.entries(needleObject)) {
         if (iterator[needleKey] === needleValue) {
           return false;
